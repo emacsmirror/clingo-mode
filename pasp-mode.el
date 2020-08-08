@@ -16,7 +16,7 @@
 
 ;; A major mode for editing Answer Set Programs, formally Potassco
 ;; Answer Set Programs (https://potassco.org/).
-;; 
+;;
 ;; Answer Set Programs are mainly used to solve complex combinatorial
 ;; problems by impressive search methods.
 ;; The modeling language follows a declarative approach with a minimal
@@ -141,7 +141,7 @@
 ;; Syntax highlighting
 
 (defvar pasp--constructs
-  '("\\.\\|:-\\|:\\|_\\|;\\|:~\\|,\\|(\\|)\\|{\\|}\\|[\\|]\\|not " . pasp-construct-face)
+  '("\\.\\|:-\\|:\\|;\\|:~\\|,\\|(\\|)\\|{\\|}\\|[\\|]\\|not " . pasp-construct-face)
    "ASP constructs.")
 
 (defconst pasp--constant
@@ -149,7 +149,7 @@
   "ASP constants.")
 
 (defconst pasp--variable
-  '("_*[[:upper:]][[:word:]_']*" . font-lock-variable-name-face)
+  '("[^[:word:]]\\(_*\\([[:upper:]][[:word:]_']*\\)?\\)" . (1 font-lock-variable-name-face))
   "ASP variable.")
 
 (defconst pasp--variable2
@@ -167,8 +167,8 @@
        pasp--constructs
        pasp--constant
        pasp--variable2
-       pasp--atom
-       pasp--variable))
+       pasp--variable
+       pasp--atom))
 
 ;;; Compilation
 
@@ -257,7 +257,7 @@ Optional argument INSTANCE The problem instance which is solved by the encoding.
 (define-derived-mode pasp-mode prog-mode "Potassco ASP"
   "A major mode for editing Answer Set Programs."
   (setq font-lock-defaults '(pasp-highlighting))
-  
+
   ;; define the syntax for un/comment region and dwim
   (setq-local comment-start "%")
   (setq-local comment-end "")
