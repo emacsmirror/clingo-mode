@@ -265,9 +265,11 @@ Optional argument INSTANCE The problem instance which is solved by the encoding.
 
 ;;; Keymap
 
+(define-key pasp-mode-map (kbd "C-c C-c") 'comment-region)
+(define-key pasp-mode-map (kbd "C-c C-u") 'uncomment-region)
+
 (define-key pasp-mode-map (kbd "C-c C-b") 'pasp-run-buffer)
 (define-key pasp-mode-map (kbd "C-c C-e") 'pasp-run)
-
 
 ;; add mode to feature list
 (provide 'pasp-mode)
