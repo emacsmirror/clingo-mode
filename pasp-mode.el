@@ -1,7 +1,11 @@
 ;;; pasp-mode.el ---- A major mode for editing Answer Set Programs. -*- lexical-binding: t -*-
 
+;; Copyright (c) 2020 by Ivan Uemlianin
 ;; Copyright (c) 2017 by Henrik Jürges
 
+;; Author: Ivan Uemlianin <ivan@llaisdy.com>
+;; URL: https://github.com/llaisdy/pasp-mode
+;; Version: 0.3.0
 ;; Author: Henrik Jürges <juerges.henrik@gmail.com>
 ;; URL: https://github.com/santifa/pasp-mode
 ;; Version: 0.1.0
@@ -54,6 +58,9 @@
 
 ;; "C-c C-e" - Call clingo with current buffer and an instance file
 ;; "C-c C-b" - Call clingo with current buffer
+;; "C-c C-r" - Call clingo with current region
+;; "C-c C-c" - Comment region
+;; "C-c C-u" - Uncomment region
 
 ;; Remark
 
@@ -76,7 +83,7 @@
   :group 'languages
   :prefix "pasp-")
 
-(defcustom pasp-mode-version "0.2.0"
+(defcustom pasp-mode-version "0.3.0"
   "Version of `pasp-mode'."
   :group 'pasp-mode)
 
