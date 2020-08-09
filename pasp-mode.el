@@ -193,48 +193,93 @@
     (set (make-local-variable 'compilation-error-regexp-alist) pasp-error-regexp-alist)
     (add-hook 'compilation-filter-hook 'pasp-compilation-filter nil t)))
 
-(defun pasp-generate-command (encoding &optional instance)
+(defun pasp-generate-command (encoding options &optional instance)
   "Generate Clingo call with some ASP input file.
 
 Argument ENCODING The current buffer which holds the problem encoding.
+Argument OPTIONS Options (possibly empty string) sent to clingo.
 Optional argument INSTANCE The problem instance which is solved by the encoding.
   If no instance it is assumed to be also in the encoding file."
   (if 'instance
-      (concat pasp-clingo-path " " pasp-clingo-options " " encoding " " instance)
-    (concat pasp-clingo-path " " pasp-clingo-options " " encoding)))
+      (concat pasp-clingo-path " " options " " encoding " " instance)
+    (concat pasp-clingo-path " " options " " encoding)))
 
-(defun pasp-run-clingo (encoding &optional instance)
+(defun pasp-run-clingo (encoding options &optional instance)
   "Run Clingo with some ASP input files.
 Be aware: Partial ASP code may lead to abnormally exits while
 the result is sufficient.
 
 Argument ENCODING The current buffer which holds the problem encoding.
+Argument OPTIONS Options (possibly empty string) sent to clingo.
 Optional argument INSTANCE The problem instance which is solved by the encoding.
   If no instance it is assumed to be also in the encoding file."
   (when (get-buffer "*clingo output*")
     (kill-buffer "*clingo output*"))
-  (let ((test-command-to-run (pasp-generate-command encoding instance))
+  (let ((test-command-to-run (pasp-generate-command encoding options instance))
         (compilation-buffer-name-function (lambda (_) "" "*clingo output*")))
     (compile test-command-to-run 'pasp-compilation-mode)))
 
-;;;###autoload
-(defun pasp-run-buffer ()
-  "Run clingo with the current buffer as input."
-  (interactive)
-  (pasp-run-clingo (buffer-file-name)))
+(defun pasp-generate-echo (region options &optional instance)
+  "Generate Clingo call with region echoed to it.
+
+Argument REGION The selected region which holds the problem encoding.
+Argument OPTIONS Options (possibly empty string) sent to clingo.
+Optional argument INSTANCE The problem instance which is solved by the encoding.
+  If no instance it is assumed to be also in the encoding file."
+  (if 'instance
+      (concat "echo \"" region "\" | " pasp-clingo-path " " options " " instance)
+    (concat "echo \"" region "\" | " pasp-clingo-path " " options)))
+
+;; (defun pasp-echo-clingo (region-begin region-end options &optional instance)
+(defun pasp-echo-clingo (region options &optional instance)
+  "Run Clingo on selected region (prompts for options).
+
+Argument REGION The selected region as a string, which holds the problem encoding.
+Argument OPTIONS Options (possibly empty string) sent to clingo.
+Optional argument INSTANCE The problem instance which is solved by the encoding.
+  If no instance it is assumed to be also in the encoding file."
+  (when (get-buffer "*clingo output*")
+    (kill-buffer "*clingo output*"))
+  (let ((test-command-to-run (pasp-generate-echo region options instance))
+        (compilation-buffer-name-function (lambda (_) "" "*clingo output*")))
+    (compile test-command-to-run 'pasp-compilation-mode)))
 
 ;; save the last user input
 (defvar pasp-last-instance "")
+(defvar pasp-last-options "")
 
 ;;;###autoload
-(defun pasp-run (instance)
-  "Run clingo with the current buffer and some user provided INSTANCE as input."
+(defun pasp-run-region (region-beginning region-end options)
+  "Run clingo with the selected REGION as input; prompts for OPTIONS."
   (interactive
-   (list (read-file-name
-          (format "Instance [%s]:" (file-name-nondirectory pasp-last-instance))
-          nil pasp-last-instance)))
-    (setq-local pasp-last-instance instance)
-    (pasp-run-clingo (buffer-file-name) instance))
+   (let ((string
+          (read-string (format "Options [%s]: " pasp-last-options) nil nil pasp-last-options)))
+     (list (region-beginning) (region-end) string)))
+  (setq-local pasp-last-options options)
+  (pasp-echo-clingo
+   (buffer-substring-no-properties region-beginning region-end)
+   options))
+
+;;;###autoload
+(defun pasp-run-buffer (options)
+  "Run clingo with the current buffer as input; prompts for OPTIONS."
+  (interactive
+   (list (read-string (format "Options [%s]: " pasp-last-options) nil nil pasp-last-options)))
+  (setq-local pasp-last-options options)
+  (pasp-run-clingo (buffer-file-name) options))
+
+;;;###autoload
+(defun pasp-run (options instance)
+  "Run clingo with the current buffer and some user provided INSTANCE as input; prompts for OPTIONS."
+  (interactive
+   (list
+    (read-string (format "Options [%s]: " pasp-last-options) nil nil pasp-last-options)
+    (read-file-name
+     (format "Instance [%s]:" (file-name-nondirectory pasp-last-instance))
+     nil pasp-last-instance)))
+  (setq-local pasp-last-options options)
+  (setq-local pasp-last-instance instance)
+  (pasp-run-clingo (buffer-file-name) options instance))
 
 ;;; Utility functions
 
@@ -269,6 +314,7 @@ Optional argument INSTANCE The problem instance which is solved by the encoding.
 (define-key pasp-mode-map (kbd "C-c C-u") 'uncomment-region)
 
 (define-key pasp-mode-map (kbd "C-c C-b") 'pasp-run-buffer)
+(define-key pasp-mode-map (kbd "C-c C-r") 'pasp-run-region)
 (define-key pasp-mode-map (kbd "C-c C-e") 'pasp-run)
 
 ;; add mode to feature list
