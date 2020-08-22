@@ -306,7 +306,7 @@ Optional argument INSTANCE The problem instance which is solved by the encoding.
 ;;; Define pasp mode
 
 ;;;###autoload
-(define-derived-mode pasp-mode prog-mode "Potassco ASP"
+(define-derived-mode pasp-mode prolog-mode "Potassco ASP"
   "A major mode for editing Answer Set Programs."
   (setq font-lock-defaults '(pasp-highlighting))
 

@@ -3,13 +3,16 @@
 A major mode for editing [[https://potassco.org/][Potassco]] Answer Set Programs files (`.lp`).  
 
 From the Potassco website:  
+#+begin_quote
 Answer Set Programming (ASP) offers a simple and powerful modeling language to solve combinatorial problems. With our tools you can concentrate on an actual problem, rather than a smart way of implementing it.
+#+end_quote
 
 ** Features
 
 - Syntax highlighting
 - Commenting functionality
 - Run clingo from emacs
+- Some smart indentation (inherited from parent prolog-mode)
 
 *** Keybindings
 
@@ -64,7 +67,7 @@ call <kbd>M-x pasp-mode</kbd> within an open asp file.
 
 ** Contributions
 
-Contributions, via issues, ideas and pull requests, are highly welcome!
+Contributions, via issues, ideas and pull requests, are very welcome!
 
 ** License
 
