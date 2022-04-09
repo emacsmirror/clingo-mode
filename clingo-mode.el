@@ -88,7 +88,7 @@
 ;;; Customization
 
 (defgroup clingo nil
-  "Major mode for editing Anwser Set Programs."
+  "Major mode for editing Answer Set Programs."
   :group 'languages
   :prefix "clingo-")
 
@@ -206,9 +206,8 @@
 
 (define-compilation-mode clingo-compilation-mode "ASP"
   "Major mode for running ASP files."
-  (progn
-    (set (make-local-variable 'compilation-error-regexp-alist) clingo-error-regexp-alist)
-    (add-hook 'compilation-filter-hook 'clingo-compilation-filter nil t)))
+  (set (make-local-variable 'compilation-error-regexp-alist) clingo-error-regexp-alist)
+  (add-hook 'compilation-filter-hook #'clingo-compilation-filter nil t))
 
 (defun clingo-generate-command (encoding options &optional instance)
   "Generate Clingo call with some ASP input file.
@@ -304,13 +303,11 @@ Argument OPTIONS Options (possibly empty string) sent to clingo."
 
 ;;; Utility functions
 
-(defun clingo-reload-mode ()
+(defun clingo--reload-mode ()
     "Reload the CLINGO major mode."
-  (interactive)
-  (progn
-    (unload-feature 'clingo-mode)
-    (require 'clingo-mode)
-    (clingo-mode)))
+  (unload-feature 'clingo-mode)
+  (require 'clingo-mode)
+    (clingo-mode))
 
 ;;; File ending
 
@@ -331,12 +328,15 @@ Argument OPTIONS Options (possibly empty string) sent to clingo."
 
 ;;; Keymap
 
-(define-key clingo-mode-map (kbd "C-c C-c") 'comment-region)
-(define-key clingo-mode-map (kbd "C-c C-u") 'uncomment-region)
-
-(define-key clingo-mode-map (kbd "C-c C-b") 'clingo-run-buffer)
-(define-key clingo-mode-map (kbd "C-c C-r") 'clingo-run-region)
-(define-key clingo-mode-map (kbd "C-c C-e") 'clingo-run)
+(defvar
+  clingo-mode-map
+  (let ((km (make-sparse-keymap)))
+    (define-key km (kbd "C-c C-c") 'comment-region)
+    (define-key km (kbd "C-c C-u") 'uncomment-region)
+    (define-key km (kbd "C-c C-b") 'clingo-run-buffer)
+    (define-key km (kbd "C-c C-r") 'clingo-run-region)
+    (define-key km (kbd "C-c C-e") 'clingo-run)
+    km))
 
 ;; add mode to feature list
 (provide 'clingo-mode)
