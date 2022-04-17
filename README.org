@@ -27,6 +27,25 @@ The above will all prompt for clingo command-line options (e.g., ~-c n=3 -n 0~, 
 
 ** Installation
 
+*** Melpa
+
+~clingo-mode~ is available through the [[MELPA][https://github.com/melpa/melpa]] repository.
+This is the recommended way to install.
+
+You can either install ~clingo-mode~ by hand with:
+
+#+begin_src lisp
+M-x package-install [RET] clingo-mode [RET]
+#+end_src
+
+or place the following snippet into your Emacs init file:
+
+#+begin_src lisp
+(unless (package-installed-p 'clingo-mode)
+  (package-refresh-contents)
+  (package-install 'clingo-mode))
+#+end_src
+
 *** Manually
 
 Download the ~clingo-mode.el~ file from this repository.
