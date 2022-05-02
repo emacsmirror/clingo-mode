@@ -55,14 +55,6 @@
 ;; - Run ASP program from within Emacs and get the compilation output
 ;; - Auto-load mode when a *.lp file is opened
 
-;;; Todo
-
-;; - Smart indentation based on nesting depth
-;; - Refactoring of predicates/variables (complete buffer and #program parts)
-;; - Color compilation output
-;; - Smart rearrange of compilation output (predicates separated, table...)
-;; - yas-snippet for rules; constraints; soft constraints; generation?
-
 ;;; Keybindings
 
 ;; "C-c C-e" - Call clingo with current buffer and an instance file
@@ -80,6 +72,16 @@
 ;; integration of Answer Set Programs into Emacs.
 
 ;; Ideas, issues and pull requests are highly welcome!
+
+;;; Todo:
+
+;; - TOP: make clingo-generate-echo safe
+;; - Smart indentation based on nesting depth
+;; - Refactoring of predicates/variables (complete buffer and #program parts)
+;; - Color compilation output
+;; - Smart rearrangement of compilation output (predicates separated, table...)
+;; - yas-snippet for rules; constraints; soft constraints; generation?
+;; - sync as much as possible with vim-syntax-clingo
 
 ;;; Code:
 
@@ -316,16 +318,6 @@ Argument OPTIONS Options (possibly empty string) sent to clingo."
 
 ;;; Define clingo mode
 
-;;;###autoload
-(define-derived-mode clingo-mode prolog-mode "Potassco ASP"
-  "A major mode for editing Answer Set Programs."
-  (setq font-lock-defaults '(clingo-highlighting))
-
-  ;; define the syntax for un/comment region and dwim
-  (setq-local comment-start "%")
-  (setq-local comment-end "")
-  (setq-local tab-width clingo-indentation))
-
 ;;; Keymap
 
 (defvar
@@ -337,6 +329,16 @@ Argument OPTIONS Options (possibly empty string) sent to clingo."
     (define-key km (kbd "C-c C-r") 'clingo-run-region)
     (define-key km (kbd "C-c C-e") 'clingo-run)
     km))
+
+;;;###autoload
+(define-derived-mode clingo-mode prolog-mode "Potassco ASP"
+  "A major mode for editing Answer Set Programs."
+  (setq font-lock-defaults '(clingo-highlighting))
+
+  ;; define the syntax for un/comment region and dwim
+  (setq-local comment-start "%")
+  (setq-local comment-end "")
+  (setq-local tab-width clingo-indentation))
 
 ;; add mode to feature list
 (provide 'clingo-mode)

@@ -55,12 +55,14 @@ in your init file or load it directly with ~(load "~/path/to/clingo-mode.el")~
 Afterwards opening an ~.lp~ file triggers ~clingo-mode~ or
 call ~M-x clingo-mode~ within an open asp file.
 
-** todo
+** Further work
+
+- *IMPORTANT* ~clingo-run-region~ is currently unsafe.  The region is sent to clingo as a string, so any quotes or escape characters will affect what reaches clingo.
 
 - Smart indentation based on nesting depth
 - Refactoring of predicates/variables (complete buffer and #program parts)
 - Color compilation output
-- Smart rearrange of compilation output (predicates separated, table...) 
+- Smart rearrangement of compilation output (predicates separated, table...)
 - yas-snippet for rules; constraints; soft constraints; generation?
 - sync as much as possible with [[https://github.com/rkaminsk/vim-syntax-clingo][vim-syntax-clingo]]
 - integrations with org-mode, company, etc.
