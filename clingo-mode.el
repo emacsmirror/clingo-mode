@@ -148,6 +148,10 @@
   '((default (:inherit font-lock-builtin-face :height 1.1)))
   "Face for ASP base constructs.")
 
+(defface clingo-statistics-face
+  '((default (:inherit compilation-info :weight bold)))
+  "Face for Clingo statistics.")
+
 ;; Syntax highlighting
 
 (defvar clingo--constructs
@@ -184,10 +188,37 @@
   "^\\(<?[a-zA-Z\.0-9_/\\-]+>?\\):\\([0-9]+\\):\\([0-9-]+\\)"
   "Regular expression to match clingo errors.")
 
+(defvar clingo-compilation-keywords
+  `(("\\(Answer\\): \\([0-9]+\\)\n"
+     (1 font-lock-function-name-face) (2 compilation-line-face)
+     (,(car clingo--atom) nil nil
+      (0 'clingo-atom-face)))
+    ("\\(Answer\\): \\([0-9]+\\)\n"
+     (,(car clingo--constructs) nil nil
+      (0 'clingo-construct-face)))
+    ("^ *\\<\\([[:alnum:] _/.+-]+\\)\\> +:"
+     (1 'clingo-statistics-face))))
+
 (defvar clingo-error-regexp-alist
   `((,clingo-error-regexp 1 2 3))
   "Alist that specifies how to match Clingo errors as per
 `compilation-error-regexp-alist'.")
+
+(defconst clingo-exit-codes
+  ;; Exit codes as per Clasp::Cli::ExitCode enumeration
+  '((0 . "nothing to be done")
+    (1 . "interrupted")
+    (10 . "satisfiable")
+    (11 . "satisfiable, interrupted")
+    (20 . "unsatisfiable")
+    (30 . "satisfiable, all models found")
+    (33 . "memory error")
+    (65 . "internal error")
+    (128 . "syntax or command line error")))
+
+(defun clingo-exit-status-success-p (exit-status)
+  "Return `t' if EXIT_STATUS conforms to a successful run of Clingo."
+  (< exit-status 32))
 
 (defun clingo-compilation-filter ()
   "Filter Clingo output.
@@ -198,10 +229,49 @@ Currently, this function merely deletes ANSI terminal escape codes."
     (while (re-search-forward "^[\\[[0-9]+[a-z]" nil t)
       (replace-match ""))))
 
+(defvar-local clingo--cached-exit-message nil
+  "Cached exit message for use in `clingo-compilation-finish'.")
+(defvar-local clingo--cached-process-status nil
+  "Cached process status for use in `clingo-compilation-finish'.")
+
+(defun clingo-exit-message-function (process-status exit-status msg)
+  "Return an exit message appropriate for EXIT_STATUS."
+  (setq clingo--cached-process-status process-status)
+  (setq clingo--cached-exit-message
+        (cons (or (cdr-safe (assoc exit-status clingo-exit-codes))
+                  "unknown status code")
+              exit-status)))
+
+(defun clingo-compilation-finish (buffer message)
+  "Hook run when a clingo process is finished in BUFFER."
+  (let* ((process-status clingo--cached-process-status)
+         (status clingo--cached-exit-message)
+         (exit-status (cdr status)))
+    (setq mode-line-process
+          (list
+           (let ((out-string (format ":%s [%s]" process-status (cdr status)))
+                 (msg (format "%s %s" mode-name
+                              (replace-regexp-in-string "\n?$" ""
+                                                        (car status)))))
+             (propertize out-string
+                         'help-echo msg
+                         'face (if (clingo-exit-status-success-p exit-status)
+                                   'compilation-mode-line-exit
+                                 'compilation-mode-line-fail)))
+           compilation-mode-line-errors))
+    (force-mode-line-update)))
+
 (define-compilation-mode clingo-compilation-mode "ASP"
   "Major mode for running ASP files."
-  (set (make-local-variable 'compilation-error-regexp-alist) clingo-error-regexp-alist)
-  (add-hook 'compilation-filter-hook #'clingo-compilation-filter nil t))
+  (set (make-local-variable 'compilation-error-regexp-alist)
+       clingo-error-regexp-alist)
+  (set (make-local-variable 'font-lock-multiline) t)
+  (set (make-local-variable 'compilation-exit-message-function)
+       #'clingo-exit-message-function)
+  (add-hook 'compilation-filter-hook #'clingo-compilation-filter nil t)
+  (add-hook 'compilation-finish-functions #'clingo-compilation-finish nil t))
+
+(font-lock-add-keywords 'clingo-compilation-mode clingo-compilation-keywords)
 
 (defun clingo-generate-command (encoding options &optional instance)
   "Generate Clingo call with some ASP input file.
