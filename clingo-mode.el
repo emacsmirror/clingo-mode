@@ -181,15 +181,18 @@
 ;;; Compilation
 
 (defvar clingo-error-regexp
-  "^[  ]+at \\(?:[^\(\n]+ \(\\)?\\(\\(?:[a-zA-Z]:\\)?[a-zA-Z\.0-9_/\\-]+\\):\\([0-9]+\\):\\([0-9]+\\)\)?"
-  "Taken from NodeJS -> only dummy impl.")
+  "^\\(<?[a-zA-Z\.0-9_/\\-]+>?\\):\\([0-9]+\\):\\([0-9-]+\\)"
+  "Regular expression to match clingo errors.")
 
 (defvar clingo-error-regexp-alist
   `((,clingo-error-regexp 1 2 3))
-  "Taken from NodeJs -> only dummy impl.")
+  "Alist that specifies how to match Clingo errors as per
+`compilation-error-regexp-alist'.")
 
 (defun clingo-compilation-filter ()
-  "Filter clingo output.  (Only dummy impl.)."
+  "Filter Clingo output.
+
+Currently, this function merely deletes ANSI terminal escape codes."
   (ansi-color-apply-on-region compilation-filter-start (point-max))
   (save-excursion
     (while (re-search-forward "^[\\[[0-9]+[a-z]" nil t)
