@@ -3,12 +3,12 @@
 ;; Copyright (c) 2020 by Ivan Uemlianin
 ;; Copyright (c) 2017 by Henrik Jürges
 
+;; Maintainer: Ivan Uemlianin <ivan@llaisdy.com>
 ;; Author: Ivan Uemlianin <ivan@llaisdy.com>
+;;         Henrik Jürges <juerges.henrik@gmail.com>
 ;; URL: https://github.com/llaisdy/clingo-mode
 ;; Version: 0.4.0
-;; Author: Henrik Jürges <juerges.henrik@gmail.com>
-;; URL: https://github.com/santifa/pasp-mode
-;; Version: 0.1.0
+;; X-Bogus-Bureaucratic-Cruft: see also <https://github.com/santifa/pasp-mode>
 ;; Package-requires: ((emacs "24.3"))
 ;; Keywords: asp, clingo, Answer Set Programs, Potassco, Major mode, languages
 
