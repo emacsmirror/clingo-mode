@@ -94,10 +94,7 @@
   :group 'languages
   :prefix "clingo-")
 
-(defcustom clingo-mode-version "0.4.0"
-  "Version of `clingo-mode'."
-  :type 'string
-  :group 'clingo-mode)
+(defconst clingo-mode-version "0.4.0" "Version of `clingo-mode'.")
 
 (defcustom clingo-indentation 2
   "Level of indentation."
