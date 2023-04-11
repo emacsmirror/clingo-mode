@@ -129,35 +129,29 @@
       (push '("not" . ?¬) prettify-symbols-alist))))
 
 ;;; Syntax table
-
-(defvar clingo-mode-syntax-table nil "Syntax table for `clingo-mode`.")
-(setq clingo-mode-syntax-table
-      (let ((table (make-syntax-table)))
-        ;; modify syntax table
-        (modify-syntax-entry ?' "w" table)
-        (modify-syntax-entry ?% "<" table)
-        (modify-syntax-entry ?\n ">" table)
-        (modify-syntax-entry ?, "_ p" table)
-        table))
+(defvar clingo-mode-syntax-table
+  (let ((table (make-syntax-table)))
+    (modify-syntax-entry ?' "w" table)
+    (modify-syntax-entry ?% "<" table)
+    (modify-syntax-entry ?\n ">" table)
+    (modify-syntax-entry ?, "_ p" table)
+    table)
+  "Syntax table for `clingo-mode`.")
 
 ;;; Syntax highlighting faces
 
-(defvar clingo-atom-face 'clingo-atom-face)
 (defface clingo-atom-face
   '((t (:inherit font-lock-keyword-face :weight normal)))
-  "Face for ASP atoms (starting with lower case)."
-  :group 'font-lock-highlighting-faces)
+  "Face for ASP atoms (starting with lower case).")
 
-(defvar clingo-construct-face 'clingo-construct-face)
 (defface clingo-construct-face
   '((default (:inherit font-lock-builtin-face :height 1.1)))
-  "Face for ASP base constructs."
-  :group 'font-lock-highlighting-faces)
+  "Face for ASP base constructs.")
 
 ;; Syntax highlighting
 
 (defvar clingo--constructs
-  '("\\.\\|:-\\|:\\|;\\|:~\\|,\\|(\\|)\\|{\\|}\\|[\\|]\\|not " . clingo-construct-face)
+  '("\\.\\|:-\\|:\\|;\\|:~\\|,\\|(\\|)\\|{\\|}\\|[\\|]\\|not " . 'clingo-construct-face)
    "ASP constructs.")
 
 (defconst clingo--constant
@@ -173,18 +167,16 @@
   "ASP variable 2.")
 
 (defconst clingo--atom
-  '("_*[[:lower:]][[:word:]_']*" . clingo-atom-face)
+  '("_*[[:lower:]][[:word:]_']*" . 'clingo-atom-face)
   "ASP atoms.")
 
-(defvar clingo-highlighting nil
-  "Regex list for syntax highlighting.")
-(setq clingo-highlighting
-      (list
-       clingo--constructs
-       clingo--constant
-       clingo--variable2
-       clingo--variable
-       clingo--atom))
+(defvar clingo-font-lock-keywords
+  (list clingo--constructs
+        clingo--constant
+        clingo--variable2
+        clingo--variable
+        clingo--atom)
+  "Font lock keywords in `clingo-mode'.")
 
 ;;; Compilation
 
@@ -328,9 +320,9 @@ Argument OPTIONS Options (possibly empty string) sent to clingo."
     km))
 
 ;;;###autoload
-(define-derived-mode clingo-mode prolog-mode "Potassco ASP"
+(define-derived-mode clingo-mode prolog-mode "Clingo"
   "A major mode for editing Answer Set Programs."
-  (setq font-lock-defaults '(clingo-highlighting))
+  (setq font-lock-defaults '(clingo-font-lock-keywords))
 
   ;; define the syntax for un/comment region and dwim
   (setq-local comment-start "%")
