@@ -106,11 +106,11 @@
   :type 'string
   :group 'clingo-mode)
 
-(defcustom clingo-options ""
+(defcustom clingo-options '()
   "Command line options passed to clingo."
-  :type 'string
+  :type '(repeat string)
   :group 'clingo-mode
-  :safe #'stringp)
+  :safe #'list-of-strings-p)
 
 (defcustom clingo-pretty-symbols-p t
   "Use Unicode characters where appropriate."
@@ -280,9 +280,14 @@ Argument ENCODING The current buffer which holds the problem encoding.
 Argument OPTIONS Options (possibly empty string) sent to clingo.
 Optional argument INSTANCE The problem instance which is solved by the encoding.
   If no instance it is assumed to be also in the encoding file."
-  (if 'instance
-      (concat clingo-path " " options " " encoding " " instance)
-    (concat clingo-path " " options " " encoding)))
+  (let ((options (if options
+                     (mapconcat #'shell-quote-argument options " ")
+                   ""))
+        (files (if instance
+                   (list encoding instance)
+                 (list encoding))))
+    (concat clingo-path " " options " "
+            (mapconcat #'shell-quote-argument files " "))))
 
 (defun clingo-run-clingo (encoding options &optional instance)
   "Run Clingo with some ASP input files.
