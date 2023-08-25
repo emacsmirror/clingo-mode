@@ -3,12 +3,12 @@
 ;; Copyright (c) 2020 by Ivan Uemlianin
 ;; Copyright (c) 2017 by Henrik Jürges
 
+;; Maintainer: Ivan Uemlianin <ivan@llaisdy.com>
 ;; Author: Ivan Uemlianin <ivan@llaisdy.com>
+;;         Henrik Jürges <juerges.henrik@gmail.com>
 ;; URL: https://github.com/llaisdy/clingo-mode
 ;; Version: 0.4.0
-;; Author: Henrik Jürges <juerges.henrik@gmail.com>
-;; URL: https://github.com/santifa/pasp-mode
-;; Version: 0.1.0
+;; X-Bogus-Bureaucratic-Cruft: see also <https://github.com/santifa/pasp-mode>
 ;; Package-requires: ((emacs "24.3"))
 ;; Keywords: asp, clingo, Answer Set Programs, Potassco, Major mode, languages
 
@@ -94,10 +94,7 @@
   :group 'languages
   :prefix "clingo-")
 
-(defcustom clingo-mode-version "0.4.0"
-  "Version of `clingo-mode'."
-  :type 'string
-  :group 'clingo-mode)
+(defconst clingo-mode-version "0.4.0" "Version of `clingo-mode'.")
 
 (defcustom clingo-indentation 2
   "Level of indentation."
@@ -109,11 +106,11 @@
   :type 'string
   :group 'clingo-mode)
 
-(defcustom clingo-options ""
+(defcustom clingo-options '()
   "Command line options passed to clingo."
-  :type 'string
+  :type '(repeat string)
   :group 'clingo-mode
-  :safe #'stringp)
+  :safe #'list-of-strings-p)
 
 (defcustom clingo-pretty-symbols-p t
   "Use Unicode characters where appropriate."
@@ -132,35 +129,33 @@
       (push '("not" . ?¬) prettify-symbols-alist))))
 
 ;;; Syntax table
-
-(defvar clingo-mode-syntax-table nil "Syntax table for `clingo-mode`.")
-(setq clingo-mode-syntax-table
-      (let ((table (make-syntax-table)))
-        ;; modify syntax table
-        (modify-syntax-entry ?' "w" table)
-        (modify-syntax-entry ?% "<" table)
-        (modify-syntax-entry ?\n ">" table)
-        (modify-syntax-entry ?, "_ p" table)
-        table))
+(defvar clingo-mode-syntax-table
+  (let ((table (make-syntax-table)))
+    (modify-syntax-entry ?' "w" table)
+    (modify-syntax-entry ?% "<" table)
+    (modify-syntax-entry ?\n ">" table)
+    (modify-syntax-entry ?, "_ p" table)
+    table)
+  "Syntax table for `clingo-mode`.")
 
 ;;; Syntax highlighting faces
 
-(defvar clingo-atom-face 'clingo-atom-face)
 (defface clingo-atom-face
   '((t (:inherit font-lock-keyword-face :weight normal)))
-  "Face for ASP atoms (starting with lower case)."
-  :group 'font-lock-highlighting-faces)
+  "Face for ASP atoms (starting with lower case).")
 
-(defvar clingo-construct-face 'clingo-construct-face)
 (defface clingo-construct-face
   '((default (:inherit font-lock-builtin-face :height 1.1)))
-  "Face for ASP base constructs."
-  :group 'font-lock-highlighting-faces)
+  "Face for ASP base constructs.")
+
+(defface clingo-statistics-face
+  '((default (:inherit compilation-info :weight bold)))
+  "Face for Clingo statistics.")
 
 ;; Syntax highlighting
 
 (defvar clingo--constructs
-  '("\\.\\|:-\\|:\\|;\\|:~\\|,\\|(\\|)\\|{\\|}\\|[\\|]\\|not " . clingo-construct-face)
+  '("\\.\\|:-\\|:\\|;\\|:~\\|,\\|(\\|)\\|{\\|}\\|[\\|]\\|not " . 'clingo-construct-face)
    "ASP constructs.")
 
 (defconst clingo--constant
@@ -176,40 +171,107 @@
   "ASP variable 2.")
 
 (defconst clingo--atom
-  '("_*[[:lower:]][[:word:]_']*" . clingo-atom-face)
+  '("_*[[:lower:]][[:word:]_']*" . 'clingo-atom-face)
   "ASP atoms.")
 
-(defvar clingo-highlighting nil
-  "Regex list for syntax highlighting.")
-(setq clingo-highlighting
-      (list
-       clingo--constructs
-       clingo--constant
-       clingo--variable2
-       clingo--variable
-       clingo--atom))
+(defvar clingo-font-lock-keywords
+  (list clingo--constructs
+        clingo--constant
+        clingo--variable2
+        clingo--variable
+        clingo--atom)
+  "Font lock keywords in `clingo-mode'.")
 
 ;;; Compilation
 
 (defvar clingo-error-regexp
-  "^[  ]+at \\(?:[^\(\n]+ \(\\)?\\(\\(?:[a-zA-Z]:\\)?[a-zA-Z\.0-9_/\\-]+\\):\\([0-9]+\\):\\([0-9]+\\)\)?"
-  "Taken from NodeJS -> only dummy impl.")
+  "^\\(<?[a-zA-Z\.0-9_/\\-]+>?\\):\\([0-9]+\\):\\([0-9-]+\\)"
+  "Regular expression to match clingo errors.")
+
+(defvar clingo-compilation-keywords
+  `(("\\(Answer\\): \\([0-9]+\\)\n"
+     (1 font-lock-function-name-face) (2 compilation-line-face)
+     (,(car clingo--atom) nil nil
+      (0 'clingo-atom-face)))
+    ("\\(Answer\\): \\([0-9]+\\)\n"
+     (,(car clingo--constructs) nil nil
+      (0 'clingo-construct-face)))
+    ("^ *\\<\\([[:alnum:] _/.+-]+\\)\\> +:"
+     (1 'clingo-statistics-face))))
 
 (defvar clingo-error-regexp-alist
   `((,clingo-error-regexp 1 2 3))
-  "Taken from NodeJs -> only dummy impl.")
+  "Alist that specifies how to match Clingo errors as per
+`compilation-error-regexp-alist'.")
+
+(defconst clingo-exit-codes
+  ;; Exit codes as per Clasp::Cli::ExitCode enumeration
+  '((0 . "nothing to be done")
+    (1 . "interrupted")
+    (10 . "satisfiable")
+    (11 . "satisfiable, interrupted")
+    (20 . "unsatisfiable")
+    (30 . "satisfiable, all models found")
+    (33 . "memory error")
+    (65 . "internal error")
+    (128 . "syntax or command line error")))
+
+(defun clingo-exit-status-success-p (exit-status)
+  "Return `t' if EXIT_STATUS conforms to a successful run of Clingo."
+  (< exit-status 32))
 
 (defun clingo-compilation-filter ()
-  "Filter clingo output.  (Only dummy impl.)."
+  "Filter Clingo output.
+
+Currently, this function merely deletes ANSI terminal escape codes."
   (ansi-color-apply-on-region compilation-filter-start (point-max))
   (save-excursion
     (while (re-search-forward "^[\\[[0-9]+[a-z]" nil t)
       (replace-match ""))))
 
+(defvar-local clingo--cached-exit-message nil
+  "Cached exit message for use in `clingo-compilation-finish'.")
+(defvar-local clingo--cached-process-status nil
+  "Cached process status for use in `clingo-compilation-finish'.")
+
+(defun clingo-exit-message-function (process-status exit-status msg)
+  "Return an exit message appropriate for EXIT_STATUS."
+  (setq clingo--cached-process-status process-status)
+  (setq clingo--cached-exit-message
+        (cons (or (cdr-safe (assoc exit-status clingo-exit-codes))
+                  "unknown status code")
+              exit-status)))
+
+(defun clingo-compilation-finish (buffer message)
+  "Hook run when a clingo process is finished in BUFFER."
+  (let* ((process-status clingo--cached-process-status)
+         (status clingo--cached-exit-message)
+         (exit-status (cdr status)))
+    (setq mode-line-process
+          (list
+           (let ((out-string (format ":%s [%s]" process-status (cdr status)))
+                 (msg (format "%s %s" mode-name
+                              (replace-regexp-in-string "\n?$" ""
+                                                        (car status)))))
+             (propertize out-string
+                         'help-echo msg
+                         'face (if (clingo-exit-status-success-p exit-status)
+                                   'compilation-mode-line-exit
+                                 'compilation-mode-line-fail)))
+           compilation-mode-line-errors))
+    (force-mode-line-update)))
+
 (define-compilation-mode clingo-compilation-mode "ASP"
   "Major mode for running ASP files."
-  (set (make-local-variable 'compilation-error-regexp-alist) clingo-error-regexp-alist)
-  (add-hook 'compilation-filter-hook #'clingo-compilation-filter nil t))
+  (set (make-local-variable 'compilation-error-regexp-alist)
+       clingo-error-regexp-alist)
+  (set (make-local-variable 'font-lock-multiline) t)
+  (set (make-local-variable 'compilation-exit-message-function)
+       #'clingo-exit-message-function)
+  (add-hook 'compilation-filter-hook #'clingo-compilation-filter nil t)
+  (add-hook 'compilation-finish-functions #'clingo-compilation-finish nil t))
+
+(font-lock-add-keywords 'clingo-compilation-mode clingo-compilation-keywords)
 
 (defun clingo-generate-command (encoding options &optional instance)
   "Generate Clingo call with some ASP input file.
@@ -218,9 +280,14 @@ Argument ENCODING The current buffer which holds the problem encoding.
 Argument OPTIONS Options (possibly empty string) sent to clingo.
 Optional argument INSTANCE The problem instance which is solved by the encoding.
   If no instance it is assumed to be also in the encoding file."
-  (if 'instance
-      (concat clingo-path " " options " " encoding " " instance)
-    (concat clingo-path " " options " " encoding)))
+  (let ((options (if options
+                     (mapconcat #'shell-quote-argument options " ")
+                   ""))
+        (files (if instance
+                   (list encoding instance)
+                 (list encoding))))
+    (concat clingo-path " " options " "
+            (mapconcat #'shell-quote-argument files " "))))
 
 (defun clingo-run-clingo (encoding options &optional instance)
   "Run Clingo with some ASP input files.
@@ -331,9 +398,9 @@ Argument OPTIONS Options (possibly empty string) sent to clingo."
     km))
 
 ;;;###autoload
-(define-derived-mode clingo-mode prolog-mode "Potassco ASP"
+(define-derived-mode clingo-mode prolog-mode "Clingo"
   "A major mode for editing Answer Set Programs."
-  (setq font-lock-defaults '(clingo-highlighting))
+  (setq font-lock-defaults '(clingo-font-lock-keywords))
 
   ;; define the syntax for un/comment region and dwim
   (setq-local comment-start "%")
