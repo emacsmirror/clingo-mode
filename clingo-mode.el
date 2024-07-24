@@ -7,7 +7,7 @@
 ;; Author: Ivan Uemlianin <ivan@llaisdy.com>
 ;;         Henrik Jürges <juerges.henrik@gmail.com>
 ;; URL: https://github.com/llaisdy/clingo-mode
-;; Version: 0.4.0
+;; Version: 0.4.1
 ;; X-Bogus-Bureaucratic-Cruft: see also <https://github.com/santifa/pasp-mode>
 ;; Package-requires: ((emacs "24.3"))
 ;; Keywords: asp, clingo, Answer Set Programs, Potassco, Major mode, languages
@@ -280,14 +280,12 @@ Argument ENCODING The current buffer which holds the problem encoding.
 Argument OPTIONS Options (possibly empty string) sent to clingo.
 Optional argument INSTANCE The problem instance which is solved by the encoding.
   If no instance it is assumed to be also in the encoding file."
-  (let ((options (if options
-                     (mapconcat #'shell-quote-argument options " ")
-                   ""))
+  (let ((options (if options options ""))
         (files (if instance
                    (list encoding instance)
                  (list encoding))))
     (concat clingo-path " " options " "
-            (mapconcat #'shell-quote-argument files " "))))
+            (mapconcat #'identity files " "))))
 
 (defun clingo-run-clingo (encoding options &optional instance)
   "Run Clingo with some ASP input files.
@@ -333,6 +331,10 @@ Optional argument INSTANCE The problem instance which is solved by the encoding.
 (defvar clingo-last-instance "")
 (defvar clingo-last-options "")
 
+(defun get-options ()
+  "Get options string in minibuffer."
+    (read-string (format "Options [%s]: " clingo-last-options) nil nil clingo-last-options))
+
 ;;;###autoload
 (defun clingo-run-region (region-beginning region-end options)
   "Run Clingo on selected region (prompts for options).
@@ -341,9 +343,8 @@ Argument REGION-BEGINNING point marking beginning of region.
 Argument REGION-END point marking end of region.
 Argument OPTIONS Options (possibly empty string) sent to clingo."
   (interactive
-   (let ((string
-          (read-string (format "Options [%s]: " clingo-last-options) nil nil clingo-last-options)))
-     (list (region-beginning) (region-end) string)))
+   (let ((string (get-options))
+         (list (region-beginning) (region-end) string)))
   (setq-local clingo-last-options options)
   (clingo-echo-clingo
    (buffer-substring-no-properties region-beginning region-end)
@@ -353,7 +354,7 @@ Argument OPTIONS Options (possibly empty string) sent to clingo."
 (defun clingo-run-buffer (options)
   "Run clingo with the current buffer as input; prompts for OPTIONS."
   (interactive
-   (list (read-string (format "Options [%s]: " clingo-last-options) nil nil clingo-last-options)))
+   (list (get-options)))
   (setq-local clingo-last-options options)
   (clingo-run-clingo (buffer-file-name) options))
 
@@ -362,7 +363,7 @@ Argument OPTIONS Options (possibly empty string) sent to clingo."
   "Run clingo with the current buffer and some user provided INSTANCE as input; prompts for OPTIONS."
   (interactive
    (list
-    (read-string (format "Options [%s]: " clingo-last-options) nil nil clingo-last-options)
+    (get-options)
     (read-file-name
      (format "Instance [%s]:" (file-name-nondirectory clingo-last-instance))
      nil clingo-last-instance)))

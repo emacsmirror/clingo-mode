@@ -20,7 +20,7 @@ Answer Set Programming (ASP) offers a simple and powerful modeling language to s
 - ~C-c C-e~ Call clingo with the current buffer as encoding and some user provided instance
 - ~C-c C-r~ Call clingo with the currently selected region
 
-The above will all prompt for clingo command-line options (e.g., ~-c n=3 -n 0~, etc.).
+The above will all prompt for clingo command-line options (e.g., ~-c n=3 -n 0~, etc.).  If there is one, the prompt will show the previous options string used, and will use that by default if an empty string is input (ie just return with no input).  To run with no options, ignoring any default, a space can be entered here.
 
 - ~C-c C-c~ Comment region
 - ~C-c C-u~ Uncomment region
@@ -44,6 +44,12 @@ or place the following snippet into your Emacs init file:
 (unless (package-installed-p 'clingo-mode)
   (package-refresh-contents)
   (package-install 'clingo-mode))
+#+end_src
+
+The package can also be installed with ~use-package~:
+
+#+begin_src lisp
+(use-package clingo-mode)
 #+end_src
 
 *** Manually
